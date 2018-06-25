@@ -14,7 +14,10 @@ export class CurrencyApiService {
               @Inject('IDX_DB_NAME') 
               private idxDbname: string,
               @Inject('IDX_DB_CURRENCIES_STORE')
-              private idxDbCurrenciesStore) { 
+              private idxDbCurrenciesStore: string,
+              @Inject('IDX_DB_CONVERSION_STORE')
+              private idxDbConversionStore: string
+            ) { 
     this._dbPromise = this.openDatabase();
   }
 
@@ -24,11 +27,13 @@ export class CurrencyApiService {
       return null;
     }
 
-    return idb.open(this.idxDbname, 1, (upgradeDb) => {
+    return idb.open(this.idxDbname, 2, (upgradeDb) => {
       switch (upgradeDb.oldVersion) {
         case 0:
           let store = upgradeDb.createObjectStore(this.idxDbCurrenciesStore, { keyPath: 'id' });
           store.createIndex('by-currencyName', 'currencyName');
+        case 1:
+          let store2 = upgradeDb.createObjectStore(this.idxDbConversionStore);
       }
     });
   }
@@ -74,9 +79,12 @@ export class CurrencyApiService {
   }
 
   convertCurrencies(fromCurrency: string, toCurrency: string): Promise<any> {
-    const conversionKey = fromCurrency + '_' + toCurrency;
-    return fetch(this.apiUrl + '/convert?q=' + conversionKey + '&compact=y')
+    const conversionKeys: string[] = [fromCurrency + '_' + toCurrency, toCurrency + '_' + fromCurrency];
+    return fetch(this.apiUrl + '/convert?q=' + conversionKeys.join(',') + '&compact=ultra')
       .then(response => response.json())
-      .then(result => result[conversionKey]['val']);
+      .then(result => {
+        console.log(result); 
+        return Promise.resolve(result[conversionKeys[0]]);
+      });
   }
 }

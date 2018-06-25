@@ -82,6 +82,7 @@ import 'hammerjs';
     { provide: 'API_URL',                   useValue: 'https://free.currencyconverterapi.com/api/v5' },
     { provide: 'IDX_DB_NAME',               useValue: 'currency_converter' },
     { provide: 'IDX_DB_CURRENCIES_STORE',   useValue: 'curr_conv' },
+    { provide: 'IDX_DB_CONVERSION_STORE',   useValue: 'curr_conv_conv' },
     CurrencyApiService
   ],
   bootstrap: [AppComponent]
