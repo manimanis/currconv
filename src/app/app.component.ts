@@ -25,12 +25,7 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     this.currAPI.getCurrencies()
       .then(currencies => {
-        this.currencies = Object.values(currencies.results);
-        this.currencies.sort((a, b) => {
-          if (a.id > b.id) return 1;
-          if (a.id < b.id) return -1;
-          return 0;
-        })
+        this.currencies = currencies;
       });
   }
 

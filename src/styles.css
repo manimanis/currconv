@@ -6,6 +6,15 @@ body {
     font-family: Roboto, sans-serif;
 }
 
-mat-list-item {
-    margin: 1.5em 0;
+mat-form-field {
+    margin: 0.4em 0;
+}
+
+.primary-card {
+    width: 85%;
+    margin: 10px auto;
+}
+
+mat-card-footer {
+    font-size: 0.8em;
 }

@@ -79,7 +79,9 @@ import 'hammerjs';
     BrowserAnimationsModule
   ],
   providers: [
-    { provide: 'API_URL', useValue: 'https://free.currencyconverterapi.com/api/v5' },
+    { provide: 'API_URL',                   useValue: 'https://free.currencyconverterapi.com/api/v5' },
+    { provide: 'IDX_DB_NAME',               useValue: 'currency_converter' },
+    { provide: 'IDX_DB_CURRENCIES_STORE',   useValue: 'curr_conv' },
     CurrencyApiService
   ],
   bootstrap: [AppComponent]
