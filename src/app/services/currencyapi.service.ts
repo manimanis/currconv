@@ -14,7 +14,6 @@ export class CurrencyApiService {
 
   convertCurrencies(fromCurrency: string, toCurrency: string): Promise<any> {
     const conversionKey = fromCurrency + '_' + toCurrency;
-    console.log(this.apiUrl + '/convert?q=' + conversionKey + '&compact=y');
     return fetch(this.apiUrl + '/convert?q=' + conversionKey + '&compact=y')
       .then(response => response.json())
       .then(result => result[conversionKey]['val']);
