@@ -1,86 +1,70 @@
 import { Injectable, Inject } from '@angular/core';
 import idb, { DB } from 'idb';
 import { Currency } from '../shared/currency';
+import { CurrenciesOperations } from '../shared/currencies_operations';
+import { DbService } from './dbservice.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CurrencyApiService {
 
-  _dbPromise: Promise<DB>;
+  _currencies: Currency[] = null;
 
-  constructor(@Inject('API_URL') 
-              private apiUrl: string,
-              @Inject('IDX_DB_NAME') 
-              private idxDbname: string,
-              @Inject('IDX_DB_CURRENCIES_STORE')
-              private idxDbCurrenciesStore: string,
-              @Inject('IDX_DB_CONVERSION_STORE')
-              private idxDbConversionStore: string
-            ) { 
-    this._dbPromise = this.openDatabase();
-  }
+  constructor(private _dbService: DbService,
+              @Inject('API_URL') 
+              private _apiUrl: string) { }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  openDatabase(): Promise<DB> {
-    if (!navigator.serviceWorker) {
-      return null;
+  fetchCurrenciesFromNet(): Promise<Currency[]> {
+    console.log('Fetching currencies from network!');
+    return fetch(this._apiUrl + '/currencies')
+      .then(reponse => reponse.json())
+      .then(data => {
+        let currencies: Currency[] = Object.values(data.results);
+        currencies.sort((a: Currency, b: Currency) => {
+          if (a.id > b.id) return 1;
+          if (a.id < b.id) return -1;
+          return 0;
+        });
+        return currencies;
+      });
+  }
+
+  getCurrencies(): Promise<Currency[]> {
+    let thisObj = this;
+    if (this._currencies) {
+      return Promise.resolve(this._currencies);
     }
 
-    return idb.open(this.idxDbname, 2, (upgradeDb) => {
-      switch (upgradeDb.oldVersion) {
-        case 0:
-          let store = upgradeDb.createObjectStore(this.idxDbCurrenciesStore, { keyPath: 'id' });
-          store.createIndex('by-currencyName', 'currencyName');
-        case 1:
-          let store2 = upgradeDb.createObjectStore(this.idxDbConversionStore);
-      }
-    });
-  }
+    return this._dbService.getCurrencyAPI().fetchAll()
+      .then(dbCurrencies => {
+        console.log('DB fetch OK!');
+        thisObj._currencies = dbCurrencies;
+        return this.fetchCurrenciesFromNet()
+          .then(netCurrencies => {
+            console.log('Network fetch OK!');
+            thisObj._currencies = netCurrencies;
+            
+            // Determine the new currencies
+            // the deleted currencies
+            // the modified currencies
+            let newCurr = CurrenciesOperations.minus(netCurrencies, dbCurrencies);
+            let delCurr = CurrenciesOperations.minus(dbCurrencies, netCurrencies);
+            let modCurr = CurrenciesOperations.intersect(dbCurrencies, netCurrencies);
+            
+            this._dbService.getCurrencyAPI().insertMany(newCurr);
+            this._dbService.getCurrencyAPI().deleteMany(delCurr);
+            this._dbService.getCurrencyAPI().updateMany(modCurr);
 
-  fetchCurrenciesFromDB() {
-    return this._dbPromise.then(db => {
-      if (!db) return;
-
-      var tx = db.transaction(this.idxDbCurrenciesStore);
-      var store = tx.objectStore(this.idxDbCurrenciesStore);
-      return store.getAll();
-    });
-  }
-
-  updateCurrencies(currencies: Currency[]) {
-    this._dbPromise.then(db => {
-      if (!db) return;
-
-      var tx = db.transaction(this.idxDbCurrenciesStore, 'readwrite');
-      var store = tx.objectStore(this.idxDbCurrenciesStore);
-
-      currencies.forEach(currency => store.put(currency));
-    });
-  }
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  getCurrencies(): Promise<Currency[]> {
-    return this.fetchCurrenciesFromDB()
-    .then(currencies => {
-      const netFetch = fetch(this.apiUrl + '/currencies')
-        .then(response => response.json())
-        .then(currencies => {
-          let sortedCurr: Currency[] = Object.values(currencies.results);
-          sortedCurr.sort((a: Currency, b: Currency) => {
-            if (a.id > b.id) return 1;
-            if (a.id < b.id) return -1;
-            return 0;
+            return Promise.resolve(thisObj._currencies);
           });
-          this.updateCurrencies(sortedCurr);
-          return sortedCurr;
-        });
-        return Promise.resolve(currencies) || netFetch;
-    });
+      });
   }
 
   convertCurrencies(fromCurrency: string, toCurrency: string): Promise<any> {
     const conversionKeys: string[] = [fromCurrency + '_' + toCurrency, toCurrency + '_' + fromCurrency];
-    return fetch(this.apiUrl + '/convert?q=' + conversionKeys.join(',') + '&compact=ultra')
+    return fetch(this._apiUrl + '/convert?q=' + conversionKeys.join(',') + '&compact=ultra')
       .then(response => response.json())
       .then(result => {
         console.log(result); 

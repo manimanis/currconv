@@ -37,6 +37,7 @@ import { CurrencyApiService } from './services/currencyapi.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import 'hammerjs';
+import { DbService } from './services/dbservice.service';
 
 @NgModule({
   declarations: [
@@ -81,9 +82,10 @@ import 'hammerjs';
   providers: [
     { provide: 'API_URL',                   useValue: 'https://free.currencyconverterapi.com/api/v5' },
     { provide: 'IDX_DB_NAME',               useValue: 'currency_converter' },
-    { provide: 'IDX_DB_CURRENCIES_STORE',   useValue: 'curr_conv' },
-    { provide: 'IDX_DB_CONVERSION_STORE',   useValue: 'curr_conv_conv' },
-    CurrencyApiService
+    { provide: 'IDX_DB_CURRENCIES_STORE',   useValue: 'currencies_names' },
+    { provide: 'IDX_DB_CONVERSION_STORE',   useValue: 'currencies_conversion' },
+    CurrencyApiService,
+    DbService
   ],
   bootstrap: [AppComponent]
 })

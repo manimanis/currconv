@@ -15,8 +15,8 @@ export class AppComponent implements OnInit {
   constructor(private currAPI: CurrencyApiService,
               fb: FormBuilder) {
     this.form = fb.group({
-      'amount': ['1', Validators.compose([Validators.required, Validators.pattern(/^\d+(\.\d*)?$/i)])],
-      'result': [{value: '', disabled: true}],
+      'amount': ['', Validators.compose([Validators.pattern(/^\d+(\.\d*)?$/i)])],
+      'result': ['', Validators.compose([Validators.pattern(/^\d+(\.\d*)?$/i)])],
       'sourceCurrency': ['', Validators.required],
       'destCurrency': ['', Validators.required]
     });
