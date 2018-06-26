@@ -10,7 +10,7 @@
       <form #myform="ngForm" [formGroup]="form">
         <div>
           <mat-form-field>
-            <mat-select placeholder="Source Currency" [formControl]="form.controls['sourceCurrency']" required>
+            <mat-select placeholder="Source Currency" [formControl]="form.controls['sourceCurrency']" (selectionChange)="setSourceCurrency(form.controls['sourceCurrency'].value)" required>
               <mat-option *ngFor="let currency of currencies" [value]="currency">{{currency.id}}</mat-option>
             </mat-select>
             <mat-error *ngIf="form.controls['sourceCurrency'].hasError('required')">Select a currency!</mat-error>
@@ -20,7 +20,7 @@
           <span>&nbsp;</span>
 
           <mat-form-field>
-            <mat-select placeholder="Destination Currency" [formControl]="form.controls['destCurrency']" required>
+            <mat-select placeholder="Destination Currency" [formControl]="form.controls['destCurrency']" (selectionChange)="setDestinationCurrency(form.controls['destCurrency'].value)" required>
               <mat-option *ngFor="let currency of currencies" [value]="currency">{{currency.id}}</mat-option>
             </mat-select>
             <mat-error *ngIf="form.controls['destCurrency'].hasError('required')">Select a currency!</mat-error>
@@ -30,28 +30,24 @@
 
         <div>
           <mat-form-field>
-              <input matInput placeholder="Amount" [formControl]="form.controls['amount']" (keyup.enter)="convert()">
+              <input matInput placeholder="Amount" [formControl]="form.controls['amount']" (change)="convert('ab')" (keyup.enter)="convert('ab')">
               <mat-error *ngIf="form.controls['amount'].hasError('pattern')">Type a positive amount!</mat-error>
           </mat-form-field>
 
           <span>&nbsp;</span>
 
           <mat-form-field>
-            <input matInput placeholder="Equivalent Amount" [formControl]="form.controls['result']" (keyup.enter)="convert()">
+            <input matInput placeholder="Equivalent Amount" [formControl]="form.controls['result']" (change)="convert('ba')" (keyup.enter)="convert('ba')">
             <mat-error *ngIf="form.controls['result'].hasError('pattern')">Type a positive amount!</mat-error>
           </mat-form-field>
-        </div>    
-
-        <div>
-            <button mat-raised-button color="primary" (click)="convert()" [disabled]="!myform.valid">Convert</button>
         </div>
       </form>
     </mat-card-content>
 
     <mat-card-footer>
       <ul>
-        <li>Type the desired amount.</li>
-        <li>Select the <em>Source</em> and <em>Destination</em> currencies.</li>
+        <li>Select the <strong>Source Currency</strong> and <strong>Destination Currency</strong>.</li>
+        <li>Type the desired amount, then press <strong>Enter</strong> Key.</li>
       </ul>
     </mat-card-footer>
   </mat-card>

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import idb, { DB } from 'idb';
 import { Currency } from '../shared/currency';
 import { CurrenciesOperations } from '../shared/currencies_operations';
+import { Conversion } from '../shared/conversion';
 
 const IDB_DB_NAME: string = 'currency_converter';
 const IDB_CURRENCIES_TABLE: string = 'currencies';
@@ -14,6 +15,7 @@ export class DbService {
 
   _dbPromise: Promise<DB> = null;
   _currencyAPI: CurrencyDbAPI;
+  _conversionsAPI: ConversionsDbAPI;
 
   constructor() { }
 
@@ -21,12 +23,17 @@ export class DbService {
     if (!this._dbPromise) {
       this._dbPromise = this.openDatabase();
       this._currencyAPI = new CurrencyDbAPI(this._dbPromise);
+      this._conversionsAPI = new ConversionsDbAPI(this._dbPromise);
     }
     return this;
   }
 
   getCurrencyAPI():CurrencyDbAPI {
     return this.getInstance()._currencyAPI;
+  }
+
+  getConversionAPI(): ConversionsDbAPI {
+    return this.getInstance()._conversionsAPI;
   }
 
   openDatabase(): Promise<DB> {
@@ -40,7 +47,7 @@ export class DbService {
           let store = upgradeDb.createObjectStore(IDB_CURRENCIES_TABLE, { keyPath: 'id' });
           store.createIndex('by-currencyName', 'currencyName');
         case 1:
-          let store2 = upgradeDb.createObjectStore(IDB_CONVERSIONS_TABLE);
+          let store2 = upgradeDb.createObjectStore(IDB_CONVERSIONS_TABLE, { keyPath: 'id' });
       }
     });
   }
@@ -182,6 +189,29 @@ export class CurrencyDbAPI {
   }
 }
 
-export class ConversionsDbService {
+export class ConversionsDbAPI {
+  constructor(public dbPromise: Promise<DB>) { }
   
+  fetchById(id: string): Promise<Conversion> {
+    return this.dbPromise.then(db => {
+      if (!db) {
+        return Promise.resolve(null);
+      }
+
+      return db.transaction(IDB_CONVERSIONS_TABLE)
+        .objectStore(IDB_CONVERSIONS_TABLE)
+        .get(id);
+    });
+  }
+
+  insert(conversion: Conversion) {
+    this.dbPromise.then(db => {
+      if (!db) return;
+
+      var tx = db.transaction(IDB_CONVERSIONS_TABLE, 'readwrite');
+      var store = tx.objectStore(IDB_CONVERSIONS_TABLE);
+
+      store.put(conversion);
+    });
+  }
 }

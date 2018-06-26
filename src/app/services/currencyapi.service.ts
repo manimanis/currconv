@@ -3,6 +3,7 @@ import idb, { DB } from 'idb';
 import { Currency } from '../shared/currency';
 import { CurrenciesOperations } from '../shared/currencies_operations';
 import { DbService } from './dbservice.service';
+import { Conversion } from '../shared/conversion';
 
 @Injectable({
   providedIn: 'root'
@@ -32,7 +33,7 @@ export class CurrencyApiService {
   }
 
   getCurrencies(): Promise<Currency[]> {
-    let thisObj = this;
+    const thisObj = this;
     if (this._currencies) {
       return Promise.resolve(this._currencies);
     }
@@ -53,9 +54,9 @@ export class CurrencyApiService {
             let delCurr = CurrenciesOperations.minus(dbCurrencies, netCurrencies);
             let modCurr = CurrenciesOperations.intersect(dbCurrencies, netCurrencies);
             
-            this._dbService.getCurrencyAPI().insertMany(newCurr);
-            this._dbService.getCurrencyAPI().deleteMany(delCurr);
-            this._dbService.getCurrencyAPI().updateMany(modCurr);
+            thisObj._dbService.getCurrencyAPI().insertMany(newCurr);
+            thisObj._dbService.getCurrencyAPI().deleteMany(delCurr);
+            thisObj._dbService.getCurrencyAPI().updateMany(modCurr);
 
             return Promise.resolve(thisObj._currencies);
           });
@@ -63,12 +64,19 @@ export class CurrencyApiService {
   }
 
   convertCurrencies(fromCurrency: string, toCurrency: string): Promise<any> {
+    const thisObj = this;
     const conversionKeys: string[] = [fromCurrency + '_' + toCurrency, toCurrency + '_' + fromCurrency];
     return fetch(this._apiUrl + '/convert?q=' + conversionKeys.join(',') + '&compact=ultra')
       .then(response => response.json())
       .then(result => {
-        console.log(result); 
-        return Promise.resolve(result[conversionKeys[0]]);
+        const convArray = Object.keys(result).map(key => new Conversion(key, result[key]));
+        convArray.forEach(conversion => {
+          thisObj._dbService
+            .getConversionAPI()
+            .insert(conversion);
+        });
+
+        return Promise.resolve(convArray);
       });
   }
 }
