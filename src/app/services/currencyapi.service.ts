@@ -4,6 +4,7 @@ import { Currency } from '../shared/currency';
 import { CurrenciesOperations } from '../shared/currencies_operations';
 import { DbService } from './dbservice.service';
 import { Conversion } from '../shared/conversion';
+import { promise } from 'protractor';
 
 @Injectable({
   providedIn: 'root'
@@ -42,41 +43,57 @@ export class CurrencyApiService {
       .then(dbCurrencies => {
         console.log('DB fetch OK!');
         thisObj._currencies = dbCurrencies;
-        return this.fetchCurrenciesFromNet()
-          .then(netCurrencies => {
-            console.log('Network fetch OK!');
-            thisObj._currencies = netCurrencies;
-            
-            // Determine the new currencies
-            // the deleted currencies
-            // the modified currencies
-            let newCurr = CurrenciesOperations.minus(netCurrencies, dbCurrencies);
-            let delCurr = CurrenciesOperations.minus(dbCurrencies, netCurrencies);
-            let modCurr = CurrenciesOperations.intersect(dbCurrencies, netCurrencies);
-            
-            thisObj._dbService.getCurrencyAPI().insertMany(newCurr);
-            thisObj._dbService.getCurrencyAPI().deleteMany(delCurr);
-            thisObj._dbService.getCurrencyAPI().updateMany(modCurr);
+        const netFetch = this.fetchCurrenciesFromNet()
+        .then(netCurrencies => {
+          console.log('Network fetch OK!');
+          thisObj._currencies = netCurrencies;
+          
+          // Determine the new currencies
+          // the deleted currencies
+          // the modified currencies
+          let newCurr = CurrenciesOperations.minus(netCurrencies, dbCurrencies);
+          let delCurr = CurrenciesOperations.minus(dbCurrencies, netCurrencies);
+          let modCurr = CurrenciesOperations.intersect(dbCurrencies, netCurrencies);
+          
+          thisObj._dbService.getCurrencyAPI().insertMany(newCurr);
+          thisObj._dbService.getCurrencyAPI().deleteMany(delCurr);
+          thisObj._dbService.getCurrencyAPI().updateMany(modCurr);
 
-            return Promise.resolve(thisObj._currencies);
-          });
+          return Promise.resolve(thisObj._currencies);
+        });
+        return Promise.resolve(thisObj._currencies) || netFetch;
       });
   }
 
   convertCurrencies(fromCurrency: string, toCurrency: string): Promise<any> {
     const thisObj = this;
     const conversionKeys: string[] = [fromCurrency + '_' + toCurrency, toCurrency + '_' + fromCurrency];
-    return fetch(this._apiUrl + '/convert?q=' + conversionKeys.join(',') + '&compact=ultra')
-      .then(response => response.json())
-      .then(result => {
-        const convArray = Object.keys(result).map(key => new Conversion(key, result[key]));
-        convArray.forEach(conversion => {
-          thisObj._dbService
-            .getConversionAPI()
-            .insert(conversion);
-        });
+    
+    const convArray = conversionKeys.map(key => thisObj._dbService.getConversionAPI()
+      .fetchById(key)
+    );
+    const netFetch = fetch(this._apiUrl + '/convert?q=' + conversionKeys.join(',') + '&compact=ultra')
+    .then(response => response.json())
+    .catch(error => console.error(error))
+    .then(result => {
+      if (!result) {
+        return Promise.reject('Failed to load resource!');
+      }
+      const convArray = Object.keys(result).map(key => new Conversion(key, result[key]));
+      convArray.forEach(conversion => {
+        thisObj._dbService
+          .getConversionAPI()
+          .insert(conversion);
+      });
+      return Promise.resolve(convArray);
+    });
 
-        return Promise.resolve(convArray);
+    return Promise.all(convArray)
+      .then(values => {
+        if (values.filter(conversion => conversion == null).length > 0) {
+          return netFetch;
+        }
+        return values;
       });
   }
 }

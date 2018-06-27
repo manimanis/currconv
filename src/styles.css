@@ -18,3 +18,11 @@ mat-form-field {
 mat-card-footer {
     font-size: 0.8em;
 }
+
+mat-form-field {
+    width: 300px;
+}
+
+.error {
+    color: red;
+}

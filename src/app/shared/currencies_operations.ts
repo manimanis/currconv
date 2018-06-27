@@ -10,6 +10,10 @@ export class CurrenciesOperations {
         return -1;
     }
 
+    static getById(currencies: Currency[], id: string): Currency {
+        return currencies.filter(currency => currency.id === id)[0];
+    }
+
     static exists(currencies: Currency[], id: string): boolean {
         return this.indexOf(currencies, id) !== -1;
     }
