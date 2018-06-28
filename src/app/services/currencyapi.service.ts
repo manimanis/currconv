@@ -20,6 +20,7 @@ export class CurrencyApiService {
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   fetchCurrenciesFromNet(): Promise<Currency[]> {
+    const thisObj = this;
     console.log('Fetching currencies from network!');
     return fetch(this._apiUrl + '/currencies')
       .then(reponse => reponse.json())
@@ -31,38 +32,33 @@ export class CurrencyApiService {
           return 0;
         });
         return currencies;
+      })
+      .then(netCurrencies => {
+        console.log('Network fetch OK!');
+        // Determine the new currencies
+        // the deleted currencies
+        // the modified currencies
+        let newCurr = CurrenciesOperations.minus(netCurrencies, thisObj._currencies);
+        let delCurr = CurrenciesOperations.minus(thisObj._currencies, netCurrencies);
+        let modCurr = CurrenciesOperations.intersect(thisObj._currencies, netCurrencies);
+
+        thisObj._currencies = netCurrencies;
+        
+        thisObj._dbService.getCurrencyAPI().insertMany(newCurr);
+        thisObj._dbService.getCurrencyAPI().deleteMany(delCurr);
+        thisObj._dbService.getCurrencyAPI().updateMany(modCurr);
+
+        return Promise.resolve(netCurrencies);
       });
   }
 
-  getCurrencies(): Promise<Currency[]> {
-    const thisObj = this;
-    if (this._currencies) {
-      return Promise.resolve(this._currencies);
-    }
-
-    return this._dbService.getCurrencyAPI().fetchAll()
+  fetchCurrenciesFromDB(): Promise<Currency[]> {
+    return  this._dbService.getCurrencyAPI().fetchAll()
       .then(dbCurrencies => {
-        console.log('DB fetch OK!');
-        thisObj._currencies = dbCurrencies;
-        const netFetch = this.fetchCurrenciesFromNet()
-        .then(netCurrencies => {
-          console.log('Network fetch OK!');
-          thisObj._currencies = netCurrencies;
-          
-          // Determine the new currencies
-          // the deleted currencies
-          // the modified currencies
-          let newCurr = CurrenciesOperations.minus(netCurrencies, dbCurrencies);
-          let delCurr = CurrenciesOperations.minus(dbCurrencies, netCurrencies);
-          let modCurr = CurrenciesOperations.intersect(dbCurrencies, netCurrencies);
-          
-          thisObj._dbService.getCurrencyAPI().insertMany(newCurr);
-          thisObj._dbService.getCurrencyAPI().deleteMany(delCurr);
-          thisObj._dbService.getCurrencyAPI().updateMany(modCurr);
+        console.log('IDB fetch OK!');
+        this._currencies = dbCurrencies;
 
-          return Promise.resolve(thisObj._currencies);
-        });
-        return Promise.resolve(thisObj._currencies) || netFetch;
+        return Promise.resolve(dbCurrencies);
       });
   }
 

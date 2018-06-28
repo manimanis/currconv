@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ApplicationRef } from '@angular/core';
 import { CurrencyApiService } from './services/currencyapi.service';
 import { Currency } from './shared/currency';
 import { FormControl, Validators, FormBuilder, FormGroup } from '@angular/forms';
@@ -30,29 +30,39 @@ export class AppComponent implements OnInit {
               fb: FormBuilder) {
     this.form = fb.group({
       'amount': ['1', Validators.compose([Validators.pattern(/^\d+(\.\d*)?$/i)])],
-      'result': ['', Validators.compose([Validators.pattern(/^\d+(\.\d*)?$/i)])],
-      'sourceCurrency': ['', Validators.required],
-      'destCurrency': ['', Validators.required]
+      'result': ['', Validators.compose([Validators.pattern(/^\d+(\.\d*)?$/i)])]
     });
   }
 
   ngOnInit() {
-    this.currAPI.getCurrencies()
+    this.currAPI.fetchCurrenciesFromDB()
       .then(currencies => {
-        this.currencies = currencies;
+        console.log('Currencies fetched:', currencies);
+        this.setCurrencies(currencies);
+        this.currAPI.fetchCurrenciesFromNet()
+          .then(currencies => {
+            this.setCurrencies(currencies);
+          });
       });
     this.refreshMostRecent();
 
     this._sourceCurrency = {currencyName: "Euro", currencySymbol: "€", id: "EUR"};
     this._destCurrency = {currencyName: "Tunisian Dinar", id: "TND"};
-    this.form.controls['sourceCurrency'].setValue(this._sourceCurrency.id);
-    this.form.controls['destCurrency'].setValue(this._destCurrency.id);
-    this.selectCurrency([this._sourceCurrency, this._destCurrency]);
+    this.refreshCurrencySelect();
   }
 
   refreshMostRecent() {
     this.dbService.getConversionAPI().fetchMostRecent()
       .then(pairs => this._mostRecentList = pairs);
+  }
+
+  refreshCurrencySelect() {
+    this.selectCurrency([this._sourceCurrency, this._destCurrency]);
+  }
+
+  setCurrencies(currencies: Currency[]) {
+    this.currencies = currencies;
+    this.refreshCurrencySelect();
   }
 
   convert(convWay: string = 'ab') {
