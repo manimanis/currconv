@@ -4,6 +4,8 @@ import { Currency } from './shared/currency';
 import { FormControl, Validators, FormBuilder, FormGroup } from '@angular/forms';
 import { Conversion } from './shared/conversion';
 import { CurrenciesOperations } from './shared/currencies_operations';
+import { ConversionPair } from './shared/conversion-pair';
+import { DbService } from './services/dbservice.service';
 
 @Component({
   selector: 'app-root',
@@ -18,12 +20,13 @@ export class AppComponent implements OnInit {
   _destCurrency: Currency = null;
   _conversionKey: string = '';
   _convWay: string = 'ab';
+  _mostRecentList: ConversionPair[] = null;
 
-  _sourceConvRate: Conversion = new Conversion();
-  _destConvRate: Conversion = new Conversion();
   _loadingFailed: boolean = false;
+  _conversionPair: ConversionPair = null;
   
   constructor(private currAPI: CurrencyApiService,
+              private dbService: DbService,
               fb: FormBuilder) {
     this.form = fb.group({
       'amount': ['1', Validators.compose([Validators.pattern(/^\d+(\.\d*)?$/i)])],
@@ -38,50 +41,53 @@ export class AppComponent implements OnInit {
       .then(currencies => {
         this.currencies = currencies;
       });
-    
+    this.refreshMostRecent();
+
     this._sourceCurrency = {currencyName: "Euro", currencySymbol: "€", id: "EUR"};
     this._destCurrency = {currencyName: "Tunisian Dinar", id: "TND"};
     this.form.controls['sourceCurrency'].setValue(this._sourceCurrency.id);
     this.form.controls['destCurrency'].setValue(this._destCurrency.id);
-    this._selectCurrency();
+    this.selectCurrency([this._sourceCurrency, this._destCurrency]);
   }
 
-  convert(convWay: string) {
-    const val = parseFloat((convWay === 'ab') ? this.form.controls['amount'].value : this.form.controls['result'].value);
-    const resultFormControl = (convWay === 'ab') ? this.form.controls['result'] : this.form.controls['amount'];
-    const convRate = (convWay === 'ab') ? this._sourceConvRate : this._destConvRate;
+  refreshMostRecent() {
+    this.dbService.getConversionAPI().fetchMostRecent()
+      .then(pairs => this._mostRecentList = pairs);
+  }
+
+  convert(convWay: string = 'ab') {
     this._convWay = convWay;
-    const res = convRate.rate * val;
-    resultFormControl.setValue(res.toFixed(4));
+    const key = (convWay === 'ab') ? `${this._sourceCurrency.id}_${this._destCurrency.id}` : `${this._destCurrency.id}_${this._sourceCurrency.id}`;
+    const amount = (convWay === 'ab') ? this.form.controls['amount'].value : this.form.controls['result'].value;
+    const resControl = (convWay === 'ab') ? this.form.controls['result'] : this.form.controls['amount'];
+    const res = ConversionPair.convertAmount(this._conversionPair, amount, key);
+    resControl.setValue(res.toFixed(4));
   }
 
-  setSourceCurrency(sourceCurrencyId: string) {
-    this._sourceCurrency = CurrenciesOperations.getById(this.currencies, sourceCurrencyId);
-    this._selectCurrency();
-  }
-
-  setDestinationCurrency(destCurrencyId: string) {
-    this._destCurrency = CurrenciesOperations.getById(this.currencies, destCurrencyId);;
-    this._selectCurrency();
-  }
-
-  _selectCurrency() {
-    if (!this._sourceCurrency || !this._destCurrency) {
+  selectCurrency(currencies: Currency[]) {
+    if (currencies == null) {
+      [this._sourceCurrency, this._destCurrency] = [null, null];
       return;
     }
+    [this._sourceCurrency, this._destCurrency] = currencies;
 
-    if (this._sourceCurrency.id === this._destCurrency.id) {
-      return;
-    }
-
-    this._conversionKey = `${this._sourceCurrency.id}_${this._destCurrency.id}`;
     this.currAPI.convertCurrencies(this._sourceCurrency.id, this._destCurrency.id)
-      .then(taux => {
-        console.log('Conversion rates : ', taux);
-        [this._sourceConvRate, this._destConvRate] = taux;
-        this._loadingFailed = !this._sourceConvRate || !this._destConvRate;
+      .then(conversionPair => {
+        console.log(conversionPair);
+        this._conversionPair = conversionPair;
         this.convert(this._convWay);
+        this.refreshMostRecent();
       })
-      .catch(error => this._loadingFailed = true);
+      .catch(error => {
+        console.log('Error : ', error);
+      });
+  }
+
+  selectConversionPair(conversionPair: ConversionPair) {
+    console.log(conversionPair);
+    this._conversionPair = conversionPair;
+    this._sourceCurrency = CurrenciesOperations.getById(this.currencies, conversionPair.key1.srcCurrency);
+    this._destCurrency = CurrenciesOperations.getById(this.currencies, conversionPair.key1.destCurrency);
+    this.convert(this._convWay);
   }
 }

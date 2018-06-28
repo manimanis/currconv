@@ -38,10 +38,14 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import 'hammerjs';
 import { DbService } from './services/dbservice.service';
+import { CurrencySelectComponent } from './currency-select/currency-select.component';
+import { MruConversionListComponent } from './mru-conversion-list/mru-conversion-list.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    CurrencySelectComponent,
+    MruConversionListComponent
   ],
   imports: [
     BrowserModule,

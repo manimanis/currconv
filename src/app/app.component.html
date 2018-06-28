@@ -5,29 +5,31 @@
     <span>&nbsp;The Currency Converter</span>
   </mat-toolbar>
 
+  <currency-select 
+    (onCurrencySelected)="selectCurrency($event)" 
+    [currenciesList]="currencies"
+    [selectedCurrencies]="[_sourceCurrency, _destCurrency]"></currency-select>
+
   <mat-card class="primary-card">
     <mat-card-content>
+      <div *ngIf="_sourceCurrency && _destCurrency">
+        Converting between
+        <strong>[{{ _sourceCurrency.id}}] {{_sourceCurrency.currencyName}} {{_sourceCurrency.currencySymbol}}</strong>
+        and
+        <strong>[{{ _destCurrency.id}}] {{_destCurrency.currencyName}} {{_destCurrency.currencySymbol}}</strong>
+        currencies.
+      </div>
+
+      <div *ngIf="_conversionPair">
+          <div matLine>
+              <strong>Currencies:</strong>
+              {{_conversionPair.key1.srcCurrency}} <mat-icon>swap_horiz</mat-icon> {{_conversionPair.key1.destCurrency}} 
+              <strong>Rates for {{_conversionPair.useDate | date:'dd/MM HH:mm'}} :</strong>
+              {{_conversionPair.key1.rate}} <mat-icon>swap_horiz</mat-icon> {{_conversionPair.key2.rate}}
+          </div>
+      </div>
+
       <form #myform="ngForm" [formGroup]="form">
-        <div>
-          <mat-form-field>
-            <mat-select placeholder="Source Currency" [formControl]="form.controls['sourceCurrency']" [value]="_sourceCurrency.id" (selectionChange)="setSourceCurrency(form.controls['sourceCurrency'].value)" required>
-              <mat-option *ngFor="let currency of currencies" [value]="currency.id">{{currency.currencyName}}</mat-option>
-            </mat-select>
-            <mat-error *ngIf="form.controls['sourceCurrency'].hasError('required')">Select a currency!</mat-error>
-            <mat-hint>[{{ _sourceCurrency?.id }}] {{ _sourceCurrency?.currencyName }} <span *ngIf="_sourceCurrency?.currencySymbol">{{ _sourceCurrency.currencySymbol }}</span></mat-hint>
-          </mat-form-field>
-
-          <span>&nbsp;</span>
-
-          <mat-form-field>
-            <mat-select placeholder="Destination Currency" [formControl]="form.controls['destCurrency']" [value]="_destCurrency.id" (selectionChange)="setDestinationCurrency(form.controls['destCurrency'].value)" required>
-              <mat-option *ngFor="let currency of currencies" [value]="currency.id">{{currency.currencyName}}</mat-option>
-            </mat-select>
-            <mat-error *ngIf="form.controls['destCurrency'].hasError('required')">Select a currency!</mat-error>
-            <mat-hint>[{{ _destCurrency?.id }}] {{ _destCurrency?.currencyName }} <span *ngIf="_destCurrency?.currencySymbol">{{ _destCurrency?.currencySymbol }}</span></mat-hint>
-          </mat-form-field>
-        </div>
-
         <div>
           <mat-form-field>
               <input matInput placeholder="Amount" [formControl]="form.controls['amount']" (change)="convert('ab')" (keyup.enter)="convert('ab')">
@@ -42,11 +44,6 @@
           </mat-form-field>
         </div>
         <div *ngIf="_loadingFailed" class="error">
-          <p>Unable to find the conversion rate for this currencies:</p>
-          <ul>
-            <li>{{_sourceCurrency.currencyName}} ({{_sourceCurrency.id}} {{_sourceCurrency.currencySymbol}})</li>
-            <li>{{_destCurrency.currencyName}} ({{_destCurrency.id}} {{_destCurrency.currencySymbol}})</li>
-          </ul>
           <button mat-raised-button color="warn" (click)="_selectCurrency()">Refresh</button>
         </div>
       </form>
@@ -54,10 +51,11 @@
 
     <mat-card-footer>
       <ul>
-        <li>Select the <strong>Source Currency</strong> and <strong>Destination Currency</strong>.</li>
         <li>Type the desired amount, then press <strong>Enter</strong> Key.</li>
       </ul>
     </mat-card-footer>
   </mat-card>
+
+  <mru-conversion-list [mruList]="_mostRecentList" (onSelectConversion)="selectConversionPair($event)"></mru-conversion-list>
 </div>
 

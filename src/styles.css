@@ -17,6 +17,7 @@ mat-form-field {
 
 mat-card-footer {
     font-size: 0.8em;
+    padding: 5px 10px;
 }
 
 mat-form-field {

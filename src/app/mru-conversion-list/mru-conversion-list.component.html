@@ -1,0 +1,21 @@
+<mat-card class="primary-card">
+  <mat-card-title>
+    Last Ten Conversions
+  </mat-card-title>
+  <mat-card-content>
+    <mat-list>
+      <mat-list-item *ngFor="let convPair of mruList">
+        <div>
+          <button mat-raised-button color="accent" (click)="selectConversionPair(convPair)">Select</button>
+        </div>
+        <div matLine>
+            <strong>Currencies:</strong>
+            {{convPair.key1.srcCurrency}} <mat-icon>swap_horiz</mat-icon> {{convPair.key1.destCurrency}} 
+            <strong>Rates:</strong>
+            {{convPair.key1.rate}} <mat-icon>swap_horiz</mat-icon> {{convPair.key2.rate}}
+        </div>
+        <div matLine><strong>Date:</strong> {{convPair.useDate | date:'dd/MM HH:mm'}}</div>
+      </mat-list-item>
+    </mat-list>
+  </mat-card-content>
+</mat-card>

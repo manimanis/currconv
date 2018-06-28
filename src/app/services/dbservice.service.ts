@@ -3,6 +3,7 @@ import idb, { DB } from 'idb';
 import { Currency } from '../shared/currency';
 import { CurrenciesOperations } from '../shared/currencies_operations';
 import { Conversion } from '../shared/conversion';
+import { ConversionPair } from '../shared/conversion-pair';
 
 const IDB_DB_NAME: string = 'currency_converter';
 const IDB_CURRENCIES_TABLE: string = 'currencies';
@@ -48,6 +49,7 @@ export class DbService {
           store.createIndex('by-currencyName', 'currencyName');
         case 1:
           let store2 = upgradeDb.createObjectStore(IDB_CONVERSIONS_TABLE, { keyPath: 'id' });
+          store2.createIndex('by-date', 'useDate');
       }
     });
   }
@@ -190,9 +192,37 @@ export class CurrencyDbAPI {
 }
 
 export class ConversionsDbAPI {
-  constructor(public dbPromise: Promise<DB>) { }
+  constructor(public dbPromise: Promise<DB>) {
+    this.deleteOld();
+  }
+
+  deleteOld() {
+    return this.dbPromise.then(db => {
+      if (!db) {
+        return;
+      }
+
+      return db.transaction(IDB_CONVERSIONS_TABLE, 'readwrite')
+        .objectStore(IDB_CONVERSIONS_TABLE)
+        .index('by-date')
+        .openCursor(null, 'prev')
+    })
+    .then(cursor => {
+      if (!cursor) {
+        return;
+      }
+      return cursor.advance(10);
+    })
+    .then(function iterCursor(cursor) {
+      if (!cursor) {
+        return;
+      }
+      cursor.delete();
+      return cursor.continue().then(iterCursor);
+    });
+  }
   
-  fetchById(id: string): Promise<Conversion> {
+  fetchById(id: string): Promise<ConversionPair> {
     return this.dbPromise.then(db => {
       if (!db) {
         return Promise.resolve(null);
@@ -204,7 +234,35 @@ export class ConversionsDbAPI {
     });
   }
 
-  insert(conversion: Conversion) {
+  fetchMostRecent(): Promise<ConversionPair[]> {
+    let mruList = [];
+    return this.dbPromise.then(db => {
+      if (!db) {
+        return Promise.resolve(null);
+      }
+
+      mruList = [];
+      return db.transaction(IDB_CONVERSIONS_TABLE)
+        .objectStore(IDB_CONVERSIONS_TABLE)
+        .index('by-date')
+        .openCursor(null, 'prev')
+    })
+    .then(function iterCursor(cursor) {
+      if (!cursor) {
+        return Promise.resolve(mruList);
+      }
+
+      if (mruList.length === 10) {
+        return Promise.resolve(mruList);
+      }
+
+      mruList.push(cursor.value);
+
+      return cursor.continue().then(iterCursor);
+    });
+  }
+
+  insert(conversion: ConversionPair) {
     this.dbPromise.then(db => {
       if (!db) return;
 

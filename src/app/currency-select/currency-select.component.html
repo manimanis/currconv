@@ -1,0 +1,25 @@
+<mat-card class="primary-card">
+  <mat-card-title>Currencies</mat-card-title>
+
+  <mat-card-content>
+    <mat-form-field>
+      <mat-select #firstCurrency placeholder="First Currency" [value]='selectedCurrencies[0]?.id' (selectionChange)="_setSelectedCurrency(0, firstCurrency.value)">
+          <mat-option *ngFor="let currency of currenciesList" [value]="currency.id">{{currency.id}} - {{currency.currencyName}}</mat-option>
+      </mat-select>
+      <mat-hint *ngIf="selectedCurrencies[0]">[{{ selectedCurrencies[0].id }}] {{ selectedCurrencies[0].currencyName }} <span *ngIf="selectedCurrencies[0].currencySymbol">{{ selectedCurrencies[0].currencySymbol }}</span></mat-hint>
+    </mat-form-field>
+
+    <span>&nbsp;</span>
+
+    <mat-form-field>
+      <mat-select #secondCurrency placeholder="Second Currency" [value]='selectedCurrencies[1]?.id' (selectionChange)="_setSelectedCurrency(1, secondCurrency.value)">
+          <mat-option *ngFor="let currency of currenciesList" [value]="currency.id">{{currency.id}} - {{currency.currencyName}}</mat-option>
+      </mat-select>
+      <mat-hint *ngIf="selectedCurrencies[1]">[{{ selectedCurrencies[1].id }}] {{ selectedCurrencies[1].currencyName }} <span *ngIf="selectedCurrencies[1].currencySymbol">{{ selectedCurrencies[1].currencySymbol }}</span></mat-hint>
+    </mat-form-field>
+  </mat-card-content>
+
+  <mat-card-footer>
+    <p>Please, select two diffent currencies to convert between.</p>
+  </mat-card-footer>
+</mat-card>
