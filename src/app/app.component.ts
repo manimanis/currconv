@@ -87,9 +87,11 @@ export class AppComponent implements OnInit {
         this._conversionPair = conversionPair;
         this.convert(this._convWay);
         this.refreshMostRecent();
+        this._loadingFailed = false;
       })
       .catch(error => {
         console.log('Error : ', error);
+        this._loadingFailed = true;
       });
   }
 
@@ -99,5 +101,6 @@ export class AppComponent implements OnInit {
     this._sourceCurrency = CurrenciesOperations.getById(this.currencies, conversionPair.key1.srcCurrency);
     this._destCurrency = CurrenciesOperations.getById(this.currencies, conversionPair.key1.destCurrency);
     this.convert(this._convWay);
+    this._loadingFailed = false;
   }
 }

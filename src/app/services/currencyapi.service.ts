@@ -86,35 +86,4 @@ export class CurrencyApiService {
             return netFetch;
           }) || netFetch;
   }
-  // convertCurrencies(fromCurrency: string, toCurrency: string): Promise<any> {
-  //   const thisObj = this;
-  //   const conversionKeys: string[] = [fromCurrency + '_' + toCurrency, toCurrency + '_' + fromCurrency];
-    
-  //   const convArray = conversionKeys.map(key => thisObj._dbService.getConversionAPI()
-  //     .fetchById(key)
-  //   );
-  //   const netFetch = fetch(this._apiUrl + '/convert?q=' + conversionKeys.join(',') + '&compact=ultra')
-  //   .then(response => response.json())
-  //   .catch(error => console.error(error))
-  //   .then(result => {
-  //     if (!result) {
-  //       return Promise.reject('Failed to load resource!');
-  //     }
-  //     const convArray = Object.keys(result).map(key => new Conversion(key, result[key]));
-  //     convArray.forEach(conversion => {
-  //       thisObj._dbService
-  //         .getConversionAPI()
-  //         .insert(conversion);
-  //     });
-  //     return Promise.resolve(convArray);
-  //   });
-
-  //   return Promise.all(convArray)
-  //     .then(values => {
-  //       if (values.filter(conversion => conversion == null).length > 0) {
-  //         return netFetch;
-  //       }
-  //       return values;
-  //     });
-  // }
 }

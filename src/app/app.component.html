@@ -10,7 +10,23 @@
     [currenciesList]="currencies"
     [selectedCurrencies]="[_sourceCurrency, _destCurrency]"></currency-select>
 
-  <mat-card class="primary-card">
+  <mat-card class="primary-card" *ngIf="_loadingFailed">
+    <mat-card-content>
+        <div mat-line color="warn">
+          Failed to load the conversion rates for this currencies from the network neither from local database.
+          The available currencies are listed in the <strong>Last Conversions History</strong> section, below.
+        </div>
+
+        <ul *ngIf="_sourceCurrency && _destCurrency">
+            <li>[{{ _sourceCurrency.id}}] {{_sourceCurrency.currencyName}} {{_sourceCurrency.currencySymbol}}</li>
+            <li>[{{ _destCurrency.id}}] {{_destCurrency.currencyName}} {{_destCurrency.currencySymbol}}</li>
+        </ul>
+
+        <div><button mat-raised-button (click)="selectCurrency([_sourceCurrency, _destCurrency])">Refresh</button></div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="primary-card" *ngIf="!_loadingFailed">
     <mat-card-content>
       <div *ngIf="_sourceCurrency && _destCurrency">
         Converting between
@@ -42,9 +58,6 @@
             <input matInput placeholder="Equivalent Amount" [formControl]="form.controls['result']" (change)="convert('ba')" (keyup.enter)="convert('ba')">
             <mat-error *ngIf="form.controls['result'].hasError('pattern')">Type a positive amount!</mat-error>
           </mat-form-field>
-        </div>
-        <div *ngIf="_loadingFailed" class="error">
-          <button mat-raised-button color="warn" (click)="_selectCurrency()">Refresh</button>
         </div>
       </form>
     </mat-card-content>

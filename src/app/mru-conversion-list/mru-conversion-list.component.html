@@ -1,9 +1,9 @@
 <mat-card class="primary-card">
   <mat-card-title>
-    Last Ten Conversions
+    Last Conversions History
   </mat-card-title>
   <mat-card-content>
-    <mat-list>
+    <mat-list *ngIf="mruList.length > 0">
       <mat-list-item *ngFor="let convPair of mruList">
         <div>
           <button mat-raised-button color="accent" (click)="selectConversionPair(convPair)">Select</button>
