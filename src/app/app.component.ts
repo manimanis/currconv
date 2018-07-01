@@ -103,4 +103,33 @@ export class AppComponent implements OnInit {
     this.convert(this._convWay);
     this._loadingFailed = false;
   }
+
+  elapsedTime() {
+    if (!this._conversionPair) {
+      return "";
+    }
+
+    const diffDate: number = Math.floor((new Date().getTime() - this._conversionPair.useDate.getTime()) / 1000);
+    if (diffDate < 3600) {
+      return "less than 1 hour";
+    } else if (diffDate < 3600 * 24) {
+      return `${Math.floor(diffDate/3600)}hours ${Math.floor((diffDate % 3600)/60)}minutes`;
+    } else {
+      return "more than one day";
+    }
+  }
+
+  isObsoleteConversionPair() {
+    if (!this._conversionPair) {
+      return true;
+    }
+
+    // calculates the number of hours passed for this conversion pair
+    const diffDate = new Date().getTime() - this._conversionPair.useDate.getTime();
+    const elapsedTime = diffDate / 1000 / 3600;
+    if (elapsedTime > 1) {
+      return true;
+    }
+    return false;
+  }
 }

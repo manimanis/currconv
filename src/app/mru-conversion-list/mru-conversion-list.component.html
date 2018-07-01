@@ -1,9 +1,10 @@
-<mat-card class="primary-card">
-  <mat-card-title>
-    Last Conversions History
-  </mat-card-title>
-  <mat-card-content>
-    <mat-list *ngIf="mruList.length > 0">
+<mat-accordion class="primary-card">
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>
+      <mat-panel-title>Last Conversions History </mat-panel-title>
+    </mat-expansion-panel-header>
+
+    <mat-list *ngIf="mruList && mruList.length > 0">
       <mat-list-item *ngFor="let convPair of mruList">
         <div>
           <button mat-raised-button color="accent" (click)="selectConversionPair(convPair)">Select</button>
@@ -17,5 +18,5 @@
         <div matLine><strong>Date:</strong> {{convPair.useDate | date:'dd/MM HH:mm'}}</div>
       </mat-list-item>
     </mat-list>
-  </mat-card-content>
-</mat-card>
+  </mat-expansion-panel>
+</mat-accordion>

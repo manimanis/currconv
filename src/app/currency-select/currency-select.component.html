@@ -1,7 +1,9 @@
-<mat-card class="primary-card">
-  <mat-card-title>Currencies</mat-card-title>
+<mat-accordion class="primary-card">
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>
+      <mat-panel-title>Currencies</mat-panel-title>
+    </mat-expansion-panel-header>
 
-  <mat-card-content>
     <mat-form-field>
       <mat-select #firstCurrency placeholder="First Currency" [value]='selectedCurrencies[0]?.id' (selectionChange)="_setSelectedCurrency(0, firstCurrency.value)">
           <mat-option *ngFor="let currency of currenciesList" [value]="currency.id">{{currency.id}} - {{currency.currencyName}}</mat-option>
@@ -17,9 +19,6 @@
       </mat-select>
       <mat-hint *ngIf="selectedCurrencies[1]">[{{ selectedCurrencies[1].id }}] {{ selectedCurrencies[1].currencyName }} <span *ngIf="selectedCurrencies[1].currencySymbol">{{ selectedCurrencies[1].currencySymbol }}</span></mat-hint>
     </mat-form-field>
-  </mat-card-content>
 
-  <mat-card-footer>
-    <p>Please, select two diffent currencies to convert between.</p>
-  </mat-card-footer>
-</mat-card>
+  </mat-expansion-panel>
+</mat-accordion>

@@ -29,7 +29,8 @@ import { MatAutocompleteModule,
   MatTooltipModule,
   MatIconModule,
   MatCardModule,
-  MatMenuModule, } from '@angular/material';
+  MatMenuModule,
+  MatExpansionModule, } from '@angular/material';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { AppComponent } from './app.component';
@@ -56,6 +57,7 @@ import { MruConversionListComponent } from './mru-conversion-list/mru-conversion
     MatButtonModule,
     MatCardModule,
     MatDatepickerModule,
+    MatExpansionModule,
     MatFormFieldModule,
     MatGridListModule,
     MatInputModule,

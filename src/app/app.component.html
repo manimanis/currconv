@@ -5,10 +5,16 @@
     <span>&nbsp;The Currency Converter</span>
   </mat-toolbar>
 
+  <!-- Component to select the currencies -->
   <currency-select 
     (onCurrencySelected)="selectCurrency($event)" 
     [currenciesList]="currencies"
     [selectedCurrencies]="[_sourceCurrency, _destCurrency]"></currency-select>
+
+  <!-- Component to select the conversion rates while being offline -->
+  <mru-conversion-list 
+    [mruList]="_mostRecentList" 
+    (onSelectConversion)="selectConversionPair($event)"></mru-conversion-list>
 
   <mat-card class="primary-card" *ngIf="_loadingFailed">
     <mat-card-content>
@@ -22,42 +28,35 @@
             <li>[{{ _destCurrency.id}}] {{_destCurrency.currencyName}} {{_destCurrency.currencySymbol}}</li>
         </ul>
 
-        <div><button mat-raised-button (click)="selectCurrency([_sourceCurrency, _destCurrency])">Refresh</button></div>
+        <div>
+          <button mat-raised-button (click)="selectCurrency([_sourceCurrency, _destCurrency])">Refresh</button>
+        </div>
     </mat-card-content>
   </mat-card>
 
   <mat-card class="primary-card" *ngIf="!_loadingFailed">
     <mat-card-content>
-      <div *ngIf="_sourceCurrency && _destCurrency">
-        Converting between
-        <strong>[{{ _sourceCurrency.id}}] {{_sourceCurrency.currencyName}} {{_sourceCurrency.currencySymbol}}</strong>
-        and
-        <strong>[{{ _destCurrency.id}}] {{_destCurrency.currencyName}} {{_destCurrency.currencySymbol}}</strong>
-        currencies.
-      </div>
-
-      <div *ngIf="_conversionPair">
-          <div matLine>
-              <strong>Currencies:</strong>
-              {{_conversionPair.key1.srcCurrency}} <mat-icon>swap_horiz</mat-icon> {{_conversionPair.key1.destCurrency}} 
-              <strong>Rates for {{_conversionPair.useDate | date:'dd/MM HH:mm'}} :</strong>
-              {{_conversionPair.key1.rate}} <mat-icon>swap_horiz</mat-icon> {{_conversionPair.key2.rate}}
-          </div>
-      </div>
-
       <form #myform="ngForm" [formGroup]="form">
-        <div>
-          <mat-form-field>
-              <input matInput placeholder="Amount" [formControl]="form.controls['amount']" (change)="convert('ab')" (keyup.enter)="convert('ab')">
-              <mat-error *ngIf="form.controls['amount'].hasError('pattern')">Type a positive amount!</mat-error>
-          </mat-form-field>
+        <mat-form-field>
+            <input matInput placeholder="Amount" [formControl]="form.controls['amount']" (change)="convert('ab')" (keyup.enter)="convert('ab')">
+            <mat-hint>[{{ _sourceCurrency.id}}] {{_sourceCurrency.currencyName}} {{_sourceCurrency.currencySymbol}}</mat-hint>
+            <mat-error *ngIf="form.controls['amount'].hasError('pattern')">Type a positive amount!</mat-error>
+        </mat-form-field>
 
-          <span>&nbsp;</span>
+        <span>&nbsp;</span>
 
-          <mat-form-field>
-            <input matInput placeholder="Equivalent Amount" [formControl]="form.controls['result']" (change)="convert('ba')" (keyup.enter)="convert('ba')">
-            <mat-error *ngIf="form.controls['result'].hasError('pattern')">Type a positive amount!</mat-error>
-          </mat-form-field>
+        <mat-form-field>
+          <input matInput placeholder="Equivalent Amount" [formControl]="form.controls['result']" (change)="convert('ba')" (keyup.enter)="convert('ba')">
+          <mat-error *ngIf="form.controls['result'].hasError('pattern')">Type a positive amount!</mat-error>
+          <mat-hint>[{{ _destCurrency.id}}] {{_destCurrency.currencyName}} {{_destCurrency.currencySymbol}}</mat-hint>
+        </mat-form-field>
+
+        <p>Converion rates are <strong>{{elapsedTime()}}</strong> old.</p>
+
+        <div *ngIf="isObsoleteConversionPair()">
+          <p>Converion rates are obsolete.</p> 
+          <p>Press <strong>[Refresh]</strong> to get the up-to-date values.</p>
+          <button mat-raised-button color="warn" (click)="selectCurrency([_sourceCurrency, _destCurrency])">Refresh</button>
         </div>
       </form>
     </mat-card-content>
@@ -69,6 +68,6 @@
     </mat-card-footer>
   </mat-card>
 
-  <mru-conversion-list [mruList]="_mostRecentList" (onSelectConversion)="selectConversionPair($event)"></mru-conversion-list>
+  
 </div>
 
