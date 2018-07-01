@@ -1,5 +1,6 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ViewChild } from '@angular/core';
 import { ConversionPair } from '../shared/conversion-pair';
+import { MatAccordion, MatExpansionPanel } from '@angular/material';
 
 @Component({
   selector: 'mru-conversion-list',
@@ -13,6 +14,9 @@ export class MruConversionListComponent implements OnInit {
 
   @Output()
   onSelectConversion: EventEmitter<ConversionPair>;
+
+  @ViewChild(MatExpansionPanel) 
+  expansionPanel: MatExpansionPanel;
   
   constructor() { 
     this.onSelectConversion = new EventEmitter();
@@ -22,6 +26,7 @@ export class MruConversionListComponent implements OnInit {
   }
 
   selectConversionPair(conversionPair: ConversionPair) {
+    this.expansionPanel.close();
     this.onSelectConversion.emit(conversionPair);
   }
 
